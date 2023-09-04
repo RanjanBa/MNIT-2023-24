@@ -1,0 +1,36 @@
+from enum import Enum
+
+class Keywords(Enum):
+    SELECT = "select"
+    FROM = "from"
+    WHERE = "where"
+    INNER_JOIN = "inner join"
+    LEFT_JOIN = "left join"
+    RIGHT_JOIN = "right join"
+    ON = "on"
+    UPDATION = "updation"
+
+def findWordIndex(statement : str, word : str, start_idx : int = 0):
+    if start_idx >= len(statement):
+        return -1
+
+    result = -1
+
+    for idx in range(start_idx, len(statement)):
+        found = True
+        if idx > 0 and not statement[idx - 1] in [" ","("]:
+            continue
+        
+        for i in range(0, len(word)):
+            if idx + i >= len(statement) or statement[idx + i].lower() != word[i].lower():
+                idx = idx + i + 1
+                found = False
+                break
+
+        if found:
+            if idx + len(word) < len(statement) and statement[idx + len(word)] in [" ", ")"]:
+                return idx
+            else:
+                idx += len(word)
+
+    return -1
