@@ -24,14 +24,14 @@ class State:
                 least_index = idx
                 key = w
         
+        attrib = ""
         if key in self.next_states.keys():
-            attrib = None
             if least_index > 0:
                 attrib = string[0:min(least_index, len(string))]
 
             return self.next_states[key], attrib
         
-        return None, None
+        return None, attrib
     
     def __str__(self) -> str:
         return f"state: {self.identifer}"

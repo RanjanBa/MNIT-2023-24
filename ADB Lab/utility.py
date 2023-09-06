@@ -8,7 +8,9 @@ class Keywords(Enum):
     LEFT_JOIN = "left join"
     RIGHT_JOIN = "right join"
     ON = "on"
-    UPDATION = "updation"
+    UNION = "union"
+    INTERSECTION = "intersection"
+    EXCEPT = "except"
 
 def findWordIndex(statement : str, word : str, start_idx : int = 0):
     if start_idx >= len(statement):
