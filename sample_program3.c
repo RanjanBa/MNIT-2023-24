@@ -26,6 +26,9 @@ int main() {
         exit(1);
     }
 
+    printf("Parent sees %d\n", sharedData);
+    sharedData++;
+
     if((status = pthread_join(thread1, &result1)) != 0) {
         fprintf(stderr, "join error %d: %s\n", status, strerror(status));
         exit(1);
