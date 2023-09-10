@@ -1,5 +1,4 @@
 import sys
-from turtle import left
 
 from utility import Keywords
 from states import State
@@ -12,6 +11,8 @@ def createStateMachine() -> State:
     from_state = State(Keywords.FROM.value)
     where_state = State(Keywords.WHERE.value)
     inner_join_state = State(Keywords.INNER_JOIN.value)
+    left_join_state = State(Keywords.LEFT_JOIN.value)
+    right_join_state = State(Keywords.RIGHT_JOIN.value)
     on_state = State(Keywords.ON.value)
     union_state = State(Keywords.UNION.value)
     intersection_state = State(Keywords.INTERSECTION.value)
@@ -29,6 +30,8 @@ def createStateMachine() -> State:
     
     from_state.next_states[Keywords.WHERE.value] = where_state
     from_state.next_states[Keywords.INNER_JOIN.value] = inner_join_state
+    from_state.next_states[Keywords.LEFT_JOIN.value] = left_join_state
+    from_state.next_states[Keywords.RIGHT_JOIN.value] = right_join_state
     from_state.next_states[Keywords.UNION.value] = union_state
     from_state.next_states[Keywords.INTERSECTION.value] = intersection_state
     from_state.next_states[Keywords.EXCEPT.value] = except_state
@@ -41,6 +44,8 @@ def createStateMachine() -> State:
     where_state.next_states[""] = completed_state
     
     inner_join_state.next_states[Keywords.ON.value] = on_state
+    left_join_state.next_states[Keywords.ON.value] = on_state
+    right_join_state.next_states[Keywords.ON.value] = on_state
 
     on_state.next_states[Keywords.WHERE.value] = where_state
     on_state.next_states[Keywords.UNION.value] = union_state
@@ -61,8 +66,8 @@ def getExpression(leaf_node : Node) -> str:
             expression = "selection(" + leaf_node.attrib + ")" + expression
         elif leaf_node.id_name == Keywords.ON.value:
             expression = "(" + leaf_node.attrib + ")"
-        elif leaf_node.id_name == Keywords.INNER_JOIN.value:
-            expression = " inner join " + expression + " " + leaf_node.attrib + ")"
+        elif leaf_node.id_name in[Keywords.INNER_JOIN.value, Keywords.LEFT_JOIN.value, Keywords.RIGHT_JOIN.value]:
+            expression = f" {leaf_node.id_name} " + expression + " " + leaf_node.attrib + ")"
         elif leaf_node.id_name == Keywords.FROM.value:
             attrib = leaf_node.attrib.replace(" ", "")
             attrib = attrib.replace(",", " X ")
@@ -155,12 +160,13 @@ def main():
         "SELECT c-id, c_name, c_title, d_PADD FROM databse",
         "SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000",
         "SELECT c-id, c_name, c_title, d_PADD FROM databse INNER JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST",
-        "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3"
+        "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3",
+        "SELECT c-id, c_name, c_title, d_PADD FROM databse LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST",
+        "SELECT c-id, c_name, c_title, d_PADD FROM databse RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST"
     ]
 
     for query in sql_queries:
         convertIntoRelationalAlgebra(query)
-    
 
 if __name__ == "__main__":
     main()
