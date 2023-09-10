@@ -8,7 +8,7 @@ img1_mat = array(img1)
 
 print(img1_mat.shape)
 
-img2 = Image.open('images/img2.jpg')
+img2 = Image.open('images/img4.jpg')
 
 img2_mat = array(img2)
 
@@ -29,4 +29,7 @@ for i in range(img1_mat.shape[0]):
 img = Image.fromarray(new_mat)
 img.show()
 
-sum_maxt = img1_mat + new_mat
+sum_mat = img1_mat + new_mat
+
+img = Image.fromarray(sum_mat)
+img.show()
