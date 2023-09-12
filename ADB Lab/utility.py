@@ -7,6 +7,7 @@ class Keywords(Enum):
     INNER_JOIN = "inner join"
     LEFT_JOIN = "left join"
     RIGHT_JOIN = "right join"
+    NATURAL_JOIN = "natural join"
     ON = "on"
     UNION = "union"
     INTERSECTION = "intersection"
