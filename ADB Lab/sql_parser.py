@@ -13,6 +13,7 @@ def createStateMachine() -> State:
     inner_join_state = State(Keywords.INNER_JOIN.value)
     left_join_state = State(Keywords.LEFT_JOIN.value)
     right_join_state = State(Keywords.RIGHT_JOIN.value)
+    natural_join_state = State(Keywords.NATURAL_JOIN.value)
     on_state = State(Keywords.ON.value)
     union_state = State(Keywords.UNION.value)
     intersection_state = State(Keywords.INTERSECTION.value)
@@ -32,6 +33,7 @@ def createStateMachine() -> State:
     from_state.next_states[Keywords.INNER_JOIN.value] = inner_join_state
     from_state.next_states[Keywords.LEFT_JOIN.value] = left_join_state
     from_state.next_states[Keywords.RIGHT_JOIN.value] = right_join_state
+    from_state.next_states[Keywords.NATURAL_JOIN.value] = natural_join_state
     from_state.next_states[Keywords.UNION.value] = union_state
     from_state.next_states[Keywords.INTERSECTION.value] = intersection_state
     from_state.next_states[Keywords.EXCEPT.value] = except_state
@@ -44,8 +46,16 @@ def createStateMachine() -> State:
     where_state.next_states[""] = completed_state
     
     inner_join_state.next_states[Keywords.ON.value] = on_state
+    
     left_join_state.next_states[Keywords.ON.value] = on_state
+    
     right_join_state.next_states[Keywords.ON.value] = on_state
+
+    natural_join_state.next_states[Keywords.WHERE.value] = where_state
+    natural_join_state.next_states[Keywords.UNION.value] = union_state
+    natural_join_state.next_states[Keywords.INTERSECTION.value] = intersection_state
+    natural_join_state.next_states[Keywords.EXCEPT.value] = except_state
+    natural_join_state.next_states[""] = completed_state
 
     on_state.next_states[Keywords.WHERE.value] = where_state
     on_state.next_states[Keywords.UNION.value] = union_state
@@ -68,13 +78,15 @@ def getExpression(leaf_node : Node) -> str:
             expression = "(" + leaf_node.attrib + ")"
         elif leaf_node.id_name in[Keywords.INNER_JOIN.value, Keywords.LEFT_JOIN.value, Keywords.RIGHT_JOIN.value]:
             expression = f" {leaf_node.id_name} " + expression + " " + leaf_node.attrib + ")"
+        elif leaf_node.id_name == Keywords.NATURAL_JOIN.value:
+            expression = expression + f" {leaf_node.id_name} " + leaf_node.attrib + ")"
         elif leaf_node.id_name == Keywords.FROM.value:
             attrib = leaf_node.attrib.replace(" ", "")
             attrib = attrib.replace(",", " X ")
             expression = "(" + attrib + expression
             if leaf_node.child == None:
                 expression += ")"
-            elif leaf_node.child.id_name != Keywords.INNER_JOIN.value:
+            elif not leaf_node.child.id_name in [Keywords.INNER_JOIN.value, Keywords.LEFT_JOIN.value, Keywords.RIGHT_JOIN.value, Keywords.NATURAL_JOIN.value]:
                 expression += ")"
         else:
             print("not implemented")
@@ -87,7 +99,7 @@ def getExpression(leaf_node : Node) -> str:
     return expression
 
 def convertIntoRelationalAlgebra(sql_query : str):
-    print(f"SQL Query :  {sql_query}")
+    print(f"\tSQL Query :  {sql_query}")
 
     cur_idx = 0
     
@@ -143,26 +155,28 @@ def convertIntoRelationalAlgebra(sql_query : str):
             expression += getExpression(cur_node)
 
     if cur_state.identifer == "error":
-        print("Error in query statement")
+        print("\tError in query statement")
         return
     
-    print(f"\nRelational Algebraic Expression :  {expression} \n\n")
+    print(f"\n\tRelational Algebraic Expression :  {expression} \n")
+    print(6*"\t",40*"*", "\n")
 
 def main():
-    #sql_query = "SELECT * FROM databse"
-    #sql_query = "SELECT c-id, c_name, c_title, d_PADD FROM databse"
-    #sql_query = "SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000"
-    #sql_query = "SELECT c-id, c_name, c_title, d_PADD FROM databse INNER JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST"
-    #sql_query =  "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3"
+    #sql_queries = [ "SELECT * FROM table",
+    #    "SELECT * FROM table WHERE a = b and c = d",
+    #    "SELECT c_id, c_name, c_title, d_PADD FROM table",
+    #    "SELECT c_id, c_name, c_title, d_PADD FROM table WHERE b > 5000",
+    #    "SELECT c_id, c_name, c_title, d_PADD FROM table_a INNER JOIN Customers ON table.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c_id, c_test FROM table_c",
+    #   "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3",
+    #    "SELECT c_id, c_name, c_title, d_PADD FROM table_a LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
+    #    "SELECT c_id, c_name, c_title, d_PADD FROM table_a RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
+    #    "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b"
+    #]
 
-    sql_queries = [ "SELECT * FROM databse",
-        "SELECT * FROM databse WHERE a = b and c = d",
-        "SELECT c-id, c_name, c_title, d_PADD FROM databse",
-        "SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000",
-        "SELECT c-id, c_name, c_title, d_PADD FROM databse INNER JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST",
-        "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3",
-        "SELECT c-id, c_name, c_title, d_PADD FROM databse LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST",
-        "SELECT c-id, c_name, c_title, d_PADD FROM databse RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c-id, c_name, c_title, d_PADD FROM databse WHERE b > 5000 UNION SELECT c-id, c_test FROM TEST"
+    sql_queries = [
+        "SELECT c_id, c_name FROM table_a INNER JOIN table_b ON table_a.c_id = table_b.c_id",
+        "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b",
+        "SELECT * FROM table_a NATURAL JOIN table_b"
     ]
 
     for query in sql_queries:
