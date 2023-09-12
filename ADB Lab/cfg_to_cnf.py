@@ -78,9 +78,22 @@ def main():
 
             for idx in range(len(words)):
                 for p in null_production_keys:
-                    words[idx].replace(p, "")
-        
+                    if words[idx].find(p) >= 0:
+                        w = words[idx].replace(p, "")
+                        if len(w) > 0:
+                            words.append(w)
+
+            print(words)
     
+    # Eliminate unit productions
+
+    for k in grammar:
+        words = grammar[k]
+
+        for w in words:
+            if len(w) == 1 and 'A' <= w and w >= 'Z':
+                print(f"unit production {k}, {w}")
+
     show_grammar(grammar)
 
 
