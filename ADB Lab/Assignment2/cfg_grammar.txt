@@ -1,0 +1,4 @@
+S -> ASB
+A -> aAS|a|null
+B -> SbS|A|bb
+C -> EF|TG|cd
