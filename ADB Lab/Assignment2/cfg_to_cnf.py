@@ -278,7 +278,7 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
     showGrammar(grammar)
 
 def main():
-    file = open("cfg_grammar.txt", "r")
+    file = open("cfg_grammar2.txt", "r")
 
     grammar : dict[str, set[str]] = {}
 
@@ -306,7 +306,11 @@ def main():
         if w != "":
             words.add(w)
 
-        grammar[rule[0].strip()] = words
+        if grammar.__contains__(rule[0].strip()):
+            for w in words:
+                grammar[rule[0].strip()].add(w)
+        else:
+            grammar[rule[0].strip()] = words
 
     convertCfgToCnf(grammar)
     
