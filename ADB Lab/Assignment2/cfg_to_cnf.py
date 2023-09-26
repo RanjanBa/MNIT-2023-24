@@ -1,5 +1,6 @@
 # epsilon : \u03B5
 # lamda : \u03BB
+import sys
 
 
 def showGrammar(grammar : dict[str, set[str]]):
@@ -48,10 +49,9 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
 
     showGrammar(grammar)
 
+    # for removing self loop
     print("\nRemoving self loop : ")
     
-    
-    # for removing self loop
     for k in grammar:
         li = list(grammar[k])
         for j in range(len(li) - 1, -1, -1):
@@ -61,7 +61,6 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
     showGrammar(grammar)
 
     # Eliminate null productions
-    
     print("\nRemoving Epsilon : ")
 
     used_null_production_keys = set()
@@ -151,7 +150,7 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
                 if ch.isupper():
                     variables.add(ch)
 
-    print(variables)
+    # print(variables)
 
     visited_var = {}
     for v in variables:
@@ -180,7 +179,7 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
 
         parents = children
 
-    print(visited_var)
+    # print(visited_var)
 
     for k in visited_var:
         if visited_var[k] == False and k in grammar.keys():
@@ -210,16 +209,24 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
     for k in grammar:
         words = list(grammar[k])
         for i in range(len(words)):
-            if len(words[i]) > 1 and  not words[i].isupper():
-                for ch in words[i]:
+            if len(words[i]) > 1 and not words[i].isupper():
+                w = list(words[i]) 
+                for idx in range(len(w)):
+                    ch = w[idx]
                     if ch.islower():
                         if not ch in new_variables.keys():
                             new_variables[ch] = availables_var.pop(0)
 
-                        new_word = words[i].replace(ch,new_variables[ch])
-                        if words[i] in grammar[k]:
-                            grammar[k].remove(words[i])
-                        grammar[k].add(new_word)
+                        w[idx] = new_variables[ch]
+
+                new_word = "" # words[i].replace(ch,new_variables[ch])
+
+                for ch in w:
+                    new_word += ch
+
+                if words[i] in grammar[k]:
+                    grammar[k].remove(words[i])
+                grammar[k].add(new_word)
 
     for ch in new_variables:
         grammar[new_variables[ch]] = set(ch)
@@ -278,7 +285,16 @@ def convertCfgToCnf(grammar : dict[str, set[str]]):
     showGrammar(grammar)
 
 def main():
-    file = open("cfg_grammar2.txt", "r")
+
+    file_name = ""
+
+    if len(sys.argv) > 1:
+        file_name = sys.argv[1]
+
+    if len(file_name) == 0:
+        file_name = "cfg_grammar1.txt"
+
+    file = open(file_name, "r")
 
     grammar : dict[str, set[str]] = {}
 
