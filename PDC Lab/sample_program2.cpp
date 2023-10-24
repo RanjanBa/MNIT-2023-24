@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void* do_greeting(void* arg);
+void* do_greeting2(void* arg);
 
 int main() {
     pthread_t thread1, thread2;
@@ -16,12 +16,12 @@ int main() {
 
     int status;
 
-    if((status = pthread_create(&thread1, NULL, do_greeting, NULL)) != 0) {
+    if((status = pthread_create(&thread1, NULL, do_greeting2, NULL)) != 0) {
         cerr << "thread create error: " << strerror(status) << endl;
         exit(1);
     }
 
-    if((status = pthread_create(&thread2, NULL, do_greeting, NULL)) != 0) {
+    if((status = pthread_create(&thread2, NULL, do_greeting2, NULL)) != 0) {
         cerr << "thread create error: " << strerror(status) << endl;
         exit(1);
     }
@@ -44,7 +44,7 @@ int main() {
     return 0;
 }
 
-void* do_greeting(void* arg) {
+void* do_greeting2(void* arg) {
     int val = rand() % 2;
 
     for(int loop = 0; loop < 10; loop++) {

@@ -11,14 +11,12 @@ int main() {
     pthread_t thread1;
     int status;
 
-    status = pthread_create(&thread1, NULL, do_greeting, NULL);
-
-    sleep(2);
-
-    if(status != 0) {
+    if((status = pthread_create(&thread1, NULL, do_greeting, NULL)) != 0) {
         fprintf(stderr, "thread create error %d: %s\n", status, strerror(status));
         exit(1);
     }
+
+    sleep(2);
 
     return 0;
 }

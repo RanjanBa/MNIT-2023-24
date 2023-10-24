@@ -5,7 +5,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-void* do_greeting(void* arg);
+void* do_greeting3(void* arg);
 
 int sharedData = 5;
 char val[2] = {'a', 'b'};
@@ -16,12 +16,12 @@ int main() {
 
     int status;
 
-    if((status = pthread_create(&thread1, NULL, do_greeting, &val[0])) != 0) {
+    if((status = pthread_create(&thread1, NULL, do_greeting3, &val[0])) != 0) {
         fprintf(stderr, "thread error %d: %s\n", status, strerror(status));
         exit(1);
     }
 
-    if((status = pthread_create(&thread2, NULL, do_greeting, &val[1])) != 0) {
+    if((status = pthread_create(&thread2, NULL, do_greeting3, &val[1])) != 0) {
         fprintf(stderr, "thread error %d: %s\n", status, strerror(status));
         exit(1);
     }
@@ -44,7 +44,7 @@ int main() {
     return 0;
 }
 
-void* do_greeting(void* arg) {
+void* do_greeting3(void* arg) {
     char *val_ptr = (char *)arg;
 
     printf("Child receiving %c initially sees %d\n", *val_ptr, sharedData);
