@@ -35,27 +35,42 @@ class StateKeywords(Enum):
     INTERSECTION = "intersection"
     EXCEPT = "except"
 
-def findWordIndex(statement : str, word : str, start_idx : int = 0):
-    if start_idx >= len(statement):
-        return -1
+def isValidParenthesis(query : str) -> bool:
+    stack : list[int] = []
+    
+    for i in range(len(query)):
+        if query[i] == '(':
+            stack.append(i)
+        elif query[i] == ')':
+            if len(stack) == 0:
+                return False
+            stack.pop()
+            
+    if len(stack) == 0:
+        return True
+    
+    return False
 
-    result = -1
-
-    for idx in range(start_idx, len(statement)):
-        found = True
-        if idx > 0 and not statement[idx - 1] in [" ","("]:
-            continue
-        
-        for i in range(0, len(word)):
-            if idx + i >= len(statement) or statement[idx + i].lower() != word[i].lower():
-                idx = idx + i + 1
-                found = False
-                break
-
-        if found:
-            if idx + len(word) < len(statement) and statement[idx + len(word)] in [" ", ")"]:
-                return idx
-            else:
-                idx += len(word)
-
-    return -1
+def getWordsFromParenthesis(query : str) -> list[str]:
+    stack : list[int] = []
+    
+    words : list[str] = []
+    parenthesisRelation : dict[int, int] = {}
+    
+    for i in range(len(query)):
+        if query[i] == '(':
+            stack.append(i)
+        elif query[i] == ')':
+            if len(stack) == 0:
+                raise Exception("Given query does not have valid parenthesis!")
+            j = stack.pop()
+            
+            if i - (j + 1) > 0:
+                words.append(query[j+1:i])
+                parenthesisRelation[j] = i
+            
+    if len(stack) != 0:
+        raise Exception("Given query does not have valid parenthesis!")
+    
+    return words, parenthesisRelation
+    

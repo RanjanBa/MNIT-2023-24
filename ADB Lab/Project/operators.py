@@ -12,29 +12,50 @@ class Operator(ABC):
         return self._id_name
     
     @property
-    def get_attrib(self) -> str:
+    def attribute(self) -> str:
         return self._attrib
     
+    @attribute.setter
+    def attribute(self, attrib : str):
+        self._attrib = attrib
+    
     def __str__(self) -> str:
-        return f"node : {self._id_name}"
+        return f"{self._id_name}"
 
 
 class UnaryOperator(Operator):
     def __init__(self, id_name: str) -> None:
-        super.__init__(id_name)
+        super().__init__(id_name)
         self._child : Operator = None
         
-    def getChild(self) -> Operator:
+    @property
+    def child(self) -> Operator:
         return self._child
+    
+    @child.setter
+    def child(self, child : Operator):
+        self._child = child
+    
 
 class BinaryOperator(Operator):
     def __init__(self, id_name: str) -> None:
-        super.__init__(id_name)
+        super().__init__(id_name)
         self._left_child : Operator = None
         self._right_child : Operator = None
-        
-    def getLeftChild(self) -> Operator:
+    
+    @property
+    def left_child(self) -> Operator:
         return self._left_child
     
-    def getRightChild(self) -> Operator:
+    @left_child.setter
+    def left_child(self, child : Operator):
+        self._left_child = child
+    
+    @property
+    def right_child(self) -> Operator:
         return self._right_child
+    
+    @right_child.setter
+    def right_child(self, child : Operator):
+        self._right_child = child
+    
