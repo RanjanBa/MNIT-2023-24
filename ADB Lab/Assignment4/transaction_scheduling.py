@@ -45,7 +45,7 @@ def main():
         file_name = sys.argv[1]
 
     if len(file_name) == 0:
-        file_name = "transactions.txt"
+        file_name = "transactions1.txt"
 
     file = open(file_name, "r")
 
@@ -77,12 +77,11 @@ def main():
     # get all permutations
     visited = [False] * len(original_transactions)
     arr = []
-    result = permutations(visited, arr)
-    print(len(result))
+    permutation_result = permutations(visited, arr)
+    print(len(permutation_result))
 
     serial_transactions = []
-
-    for res in result:
+    for res in permutation_result:
         serial = []
         
         for i in range(len(original_transactions)):
@@ -105,7 +104,7 @@ def main():
     print(serial_transactions)
     
     print('Correct Positions : ')
-    for serial in serial_transactions:
+    for order_idx, serial in enumerate(serial_transactions):
         is_confict = False
         for idx, transaction in enumerate(transactions):
             serial_pos = 0
@@ -159,6 +158,7 @@ def main():
                     break
         if not is_confict:
             print("Serializable")
+            print(permutation_result[order_idx])
         else:
             print("Not Serializable")
             

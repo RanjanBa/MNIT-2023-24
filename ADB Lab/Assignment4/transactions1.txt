@@ -1,9 +1,9 @@
 Transaction 1 | Transaction 2
 R(A) | ---
-R(A) | ---
+W(A) | ---
 ---  | R(A)
----  | R(A)
+---  | W(A)
 R(B) | ---
-R(B) | ---
----  | R(A)
----  | R(A)
+W(B) | ---
+---  | R(B)
+---  | W(B)

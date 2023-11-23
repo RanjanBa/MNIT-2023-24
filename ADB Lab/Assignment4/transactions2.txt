@@ -1,0 +1,9 @@
+Transaction 1 | Transaction 2
+---  | R(A)
+---  | W(A)
+R(A) | ---
+W(A) | ---
+---  | R(B)
+---  | W(B)
+R(B) | ---
+W(B) | ---

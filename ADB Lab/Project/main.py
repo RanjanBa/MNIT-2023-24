@@ -1,8 +1,80 @@
-from database_manager import saveDatabase, loadDatabase
 from operators import UnaryOperator, BinaryOperator
 from states import State
-from utility import StateKeywords, QueryKeywords, getWordsFromParenthesis
+from utility import StateKeywords, QueryKeywords, getWordsFromParenthesis, getUnicode
 
+def isQueryKeywordPresent(query : str):
+    for idx in range(len(query)):
+        for keyword in QueryKeywords:
+            if idx > 0 and query[idx-1] != " ":
+                continue
+            
+            last = idx + len(keyword.value)
+            
+            if last < len(query) and query[last] != " ":
+                continue
+            
+            new_word = query[idx:last]
+            
+            if new_word.lower() == keyword.value.lower():
+                return True
+    
+    return False
+
+def processAttribute(attrib : str) -> str:
+    if not attrib:
+        return None
+    
+    attrib = attrib.strip()
+    
+    if len(attrib) == 0:
+        return None
+    
+    if attrib[0] == '(':
+        if len(attrib) == 1:
+            return None
+        
+        attrib = attrib[1:]
+    
+    if attrib[-1] == ')':
+        if len(attrib) == 1:
+            return None
+        
+        attrib = attrib[:-1]
+        
+    return attrib
+
+def getEquivalence(root_state : State, root_node : UnaryOperator | BinaryOperator) -> list[str]:
+    equivalences : list[str] = []
+    
+    equivalences.append(getExpression(root_state, root_node))
+    
+    if isinstance(root_node, BinaryOperator):
+        left = root_node.left_child
+        root_node.left_child = root_node.right_child
+        root_node.right_child = left
+        equivalences.append(getExpression(root_state, root_node))
+
+    return equivalences
+
+def getTableNames(root_state : State, root_node : UnaryOperator | BinaryOperator):
+    if root_node == None:
+        return None
+
+    if root_node.id_name == StateKeywords.FROM.value:
+        if isQueryKeywordPresent(root_node.attribute):
+            try:
+                node = createSQLTree(root_state, root_node.attribute)
+                if node == None:
+                    return root_node.attribute
+                return getTableNames(root_state, node)
+            except:
+                raise Exception(f"Nested Query \"{root_node.attribute}\" is not valid!")
+        return root_node.attribute
+    
+    if isinstance(root_node, UnaryOperator):
+        return getTableNames(root_state, root_node.child)
+    
+    return getTableNames(root_state, root_node.left_child) + "," + getTableNames(root_state, root_node.right_child)
 
 def createFlowGraph() -> State:
     root_state = State(StateKeywords.ROOT.value)
@@ -88,49 +160,31 @@ def createFlowGraph() -> State:
         
     return root_state
 
-def processAttribute(attrib : str) -> str:
-    if not attrib:
-        return None
-    
-    attrib = attrib.strip()
-    
-    if len(attrib) == 0:
-        return None
-    
-    if attrib[0] == '(':
-        if len(attrib) == 1:
-            return None
-        
-        attrib = attrib[1:]
-    
-    if attrib[-1] == ')':
-        if len(attrib) == 1:
-            return None
-        
-        attrib = attrib[:-1]
-        
-    return attrib
-
 def getExpression(root_state : State, root_node : UnaryOperator | BinaryOperator):
     expression = ""
     
     while root_node:
         attribute = root_node.attribute
-        print(attribute)
+        # print(attribute)
         if root_node.attribute:
             attribute = getRelationalAlgebra(root_state, root_node.attribute)
             
         if root_node.id_name == StateKeywords.SELECT.value:
-            expression = root_node.id_name + f"({attribute})"
+            if attribute != None and attribute != "*":
+                expression = getUnicode(root_node.id_name) + f"({attribute})"
         elif root_node.id_name == StateKeywords.WHERE.value:
-            expression += root_node.id_name + f"({attribute})"
+            if attribute != None:
+                expression += getUnicode(root_node.id_name) + f"({attribute})"
         elif root_node.id_name == StateKeywords.FROM.value:
             expression += f"({attribute})"
         elif root_node.id_name in [StateKeywords.INNER_JOIN.value, StateKeywords.LEFT_JOIN.value, StateKeywords.RIGHT_JOIN.value, StateKeywords.NATURAL_JOIN.value]:
-            expression += "(" + getExpression(root_state, root_node.left_child) + f" {root_node.id_name} " + f"({attribute})" + getExpression(root_state, root_node.right_child) + ")"
+            if attribute == None:
+                expression += "(" + getExpression(root_state, root_node.left_child) + f" {getUnicode(root_node.id_name)} " + getExpression(root_state, root_node.right_child) + ")"
+            else:
+                expression += "(" + getExpression(root_state, root_node.left_child) + f" {getUnicode(root_node.id_name)} " + f"({attribute})" + getExpression(root_state, root_node.right_child) + ")"
             break
         elif root_node.id_name in [StateKeywords.UNION.value, StateKeywords.INTERSECTION.value, StateKeywords.EXCEPT.value]:
-            expression += "(" + getExpression(root_state, root_node.left_child) + ")" + f" {root_node.id_name} " + "(" + getExpression(root_state, root_node.right_child) + ")"
+            expression += "(" + getExpression(root_state, root_node.left_child) + ")" + f" {getUnicode(root_node.id_name)} " + "(" + getExpression(root_state, root_node.right_child) + ")"
             break
         
         root_node = root_node.child
@@ -138,7 +192,7 @@ def getExpression(root_state : State, root_node : UnaryOperator | BinaryOperator
     return expression
 
 def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOperator:
-    #print("Query : ", query)
+    # print("Query : ", query)
      
     _, parenthesisRelation = getWordsFromParenthesis(query)
 
@@ -148,12 +202,12 @@ def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOpera
     root_node : UnaryOperator | BinaryOperator = None
     current_select_node : UnaryOperator = None
     
-    while start_idx < len(query) and current_state and not current_state.identifer in [StateKeywords.ERROR.value, StateKeywords.COMPLETE.value]:
+    while start_idx < len(query) and current_state:
         while(start_idx < len(query) and query[start_idx] == " "):
             start_idx += 1
 
         next_state, attrib = current_state.getNextStateAndCurrentStateAttribute(query, start_idx, parenthesisRelation)
-        #print(f"current-state : {current_state} attribute : {attrib} \t next-state {next_state}")
+        # print(f"current-state : {current_state} attribute : {attrib} \t next-state {next_state}")
         
         if next_state:
             start_idx += len(next_state.identifer)
@@ -249,7 +303,8 @@ def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOpera
                     root_node = node
         
         current_state = next_state
-    
+        if current_state.identifer in [StateKeywords.ERROR.value, StateKeywords.COMPLETE.value]:
+            break
     
     if current_state.identifer == StateKeywords.ERROR.value:
         raise Exception("Given query is not valid.")
@@ -257,12 +312,17 @@ def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOpera
     return root_node
 
 def getRelationalAlgebra(root_state : State, query : str):
+    if not isQueryKeywordPresent(query):
+        return query
+    
     try:
         root_node = createSQLTree(root_state, query)
+        # print(f"Table Name for \"{query}\" : {getTableNames(root_state, root_node)}")
+        for e in getEquivalence(root_state, root_node):
+            print(e)
         return getExpression(root_state, root_node)
-    except:
-        return query
-
+    except Exception as e:
+        raise Exception(e)
 
 def parseSQLQuery(root_state : State, query : str):
     print (f"Query : {query}")
@@ -277,33 +337,39 @@ def parseSQLQuery(root_state : State, query : str):
             elif child.id_name == StateKeywords.DATABASE.value:
                 print(f"Create Database : {child.attribute}")
     else:
-        print(getRelationalAlgebra(root_state, query))
+        try:
+            str = getRelationalAlgebra(root_state, query)
+            print(str)
+        except Exception as e:
+            print(e)
 
 def main():
-    # sql_queries = [ "SELECT * FROM table",
-    #    "SELECT * FROM table WHERE a = b and c = d",
-    #    "SELECT c_id, c_name, c_title, d_PADD FROM table",
-    #    "SELECT c_id, c_name, c_title, d_PADD FROM table WHERE b > 5000",
-    #    "SELECT c_id, c_name, c_title, d_PADD FROM table_a INNER JOIN Customers ON table.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c_id, c_test FROM table_c",
-    #    "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3",
-    #    "SELECT c_id, c_name, c_title, d_PADD FROM table_a LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
-    #    "SELECT c_id, c_name, c_title, d_PADD FROM table_a RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
-    #    "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b"
-    # ]
+    sql_queries = [
+        "SELECT * FROM table1",
+       "SELECT * FROM table1 WHERE a = b and c = d",
+       "SELECT c_id, c_name, c_title, d_PADD FROM table1",
+       "SELECT c_id, c_name, c_title, d_PADD FROM table1 WHERE b > 5000",
+       "SELECT c_id, c_name, c_title, d_PADD FROM table_a INNER JOIN Customers ON table.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c_id, c_test FROM table_c",
+       "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3",
+       "SELECT c_id, c_name, c_title, d_PADD FROM table_a LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
+       "SELECT c_id, c_name, c_title, d_PADD FROM table_a RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
+       "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b",
+       "SELECT a FROM t1 EXCEPT SELECT a FROM t2 WHERE a=11 AND b=2"
+    ]
 
     # sql_queries = [
-    #     "SELECT c_id, c_name FROM table_a INNER JOIN table_b ON table_a.c_id = table_b.c_id",
+    #     "SELECT c_id, c_name FROM SELECT t FROM table_a INNER JOIN table_b ON table_a.c_id = table_b.c_id",
     #     "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b",
     #     "SELECT * FROM table_a NATURAL JOIN table_b"
     # ]
     
-    sql_queries = [
-        "CREATE DATABASE database_name",
-        "CREATE TABLE (attrib_1, attrib_2)",
-        "SELECT c_id, c_name FROM (SELECT p_id FROM table1 WHERE (p_id < test))",
-        "SELECT c_id, c_name FROM (SELECT p_id FROM table1) WHERE p_id < test",
-        "SELECT c_id, c_name FROM SELECT p_id FROM table1 WHERE p_id < test"
-    ]
+    # sql_queries = [
+    #     "CREATE DATABASE database_name",
+    #     "CREATE TABLE (attrib_1, attrib_2)",
+    #     "SELECT c_id, c_name FROM (SELECT p_id FROM table1 WHERE (p_id < test))",
+    #     "SELECT c_id, c_name FROM (SELECT p_id FROM table1) WHERE p_id < test",
+    #     "SELECT c_id, c_name FROM SELECT p_id FROM table1 WHERE p_id < test"
+    # ]
 
     root_state = createFlowGraph()
 

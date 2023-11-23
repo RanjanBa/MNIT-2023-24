@@ -73,4 +73,17 @@ def getWordsFromParenthesis(query : str) -> list[str]:
         raise Exception("Given query does not have valid parenthesis!")
     
     return words, parenthesisRelation
+
+UNICODES = {
+    "select" : "\u03A0",
+    "where" : "\u03C3",
+    "union" : "\u03C5",
+    "except" : "-",
+    "intersection" : "\u2229"
+}
+
+def getUnicode(code : str) -> str:
+    if UNICODES.keys().__contains__(code):
+        return UNICODES[code]
     
+    return code
