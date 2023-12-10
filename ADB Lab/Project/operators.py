@@ -6,6 +6,7 @@ class Operator(ABC):
         self._id_name = id_name
         self._attrib : str = None
         self.root : Operator = None
+        self.__sub_tree : Operator = None
 
     @property
     def id_name(self)->str:
@@ -22,6 +23,14 @@ class Operator(ABC):
     def __str__(self) -> str:
         return f"{self._id_name}"
 
+    @property
+    def sub_tree(self):
+        return self.__sub_tree
+    
+    @sub_tree.setter
+    def sub_tree(self, tree):
+        self.__sub_tree = tree
+        
 
 class UnaryOperator(Operator):
     def __init__(self, id_name: str) -> None:

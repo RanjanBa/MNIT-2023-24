@@ -1,80 +1,8 @@
 from operators import UnaryOperator, BinaryOperator
 from states import State
-from utility import StateKeywords, QueryKeywords, getWordsFromParenthesis, getUnicode
-
-def isQueryKeywordPresent(query : str):
-    for idx in range(len(query)):
-        for keyword in QueryKeywords:
-            if idx > 0 and query[idx-1] != " ":
-                continue
-            
-            last = idx + len(keyword.value)
-            
-            if last < len(query) and query[last] != " ":
-                continue
-            
-            new_word = query[idx:last]
-            
-            if new_word.lower() == keyword.value.lower():
-                return True
-    
-    return False
-
-def processAttribute(attrib : str) -> str:
-    if not attrib:
-        return None
-    
-    attrib = attrib.strip()
-    
-    if len(attrib) == 0:
-        return None
-    
-    if attrib[0] == '(':
-        if len(attrib) == 1:
-            return None
-        
-        attrib = attrib[1:]
-    
-    if attrib[-1] == ')':
-        if len(attrib) == 1:
-            return None
-        
-        attrib = attrib[:-1]
-        
-    return attrib
-
-def getEquivalence(root_state : State, root_node : UnaryOperator | BinaryOperator) -> list[str]:
-    equivalences : list[str] = []
-    
-    equivalences.append(getExpression(root_state, root_node))
-    
-    if isinstance(root_node, BinaryOperator):
-        left = root_node.left_child
-        root_node.left_child = root_node.right_child
-        root_node.right_child = left
-        equivalences.append(getExpression(root_state, root_node))
-
-    return equivalences
-
-def getTableNames(root_state : State, root_node : UnaryOperator | BinaryOperator):
-    if root_node == None:
-        return None
-
-    if root_node.id_name == StateKeywords.FROM.value:
-        if isQueryKeywordPresent(root_node.attribute):
-            try:
-                node = createSQLTree(root_state, root_node.attribute)
-                if node == None:
-                    return root_node.attribute
-                return getTableNames(root_state, node)
-            except:
-                raise Exception(f"Nested Query \"{root_node.attribute}\" is not valid!")
-        return root_node.attribute
-    
-    if isinstance(root_node, UnaryOperator):
-        return getTableNames(root_state, root_node.child)
-    
-    return getTableNames(root_state, root_node.left_child) + "," + getTableNames(root_state, root_node.right_child)
+from utility import StateKeywords, QueryKeywords, getWordsFromParenthesis, isQueryKeywordPresent, processAttribute
+from relational_expression import getExpression
+from relational_equivalence import getEquivalence
 
 def createFlowGraph() -> State:
     root_state = State(StateKeywords.ROOT.value)
@@ -160,41 +88,10 @@ def createFlowGraph() -> State:
         
     return root_state
 
-def getExpression(root_state : State, root_node : UnaryOperator | BinaryOperator):
-    expression = ""
-    
-    while root_node:
-        attribute = root_node.attribute
-        # print(attribute)
-        if root_node.attribute:
-            attribute = getRelationalAlgebra(root_state, root_node.attribute)
-            
-        if root_node.id_name == StateKeywords.SELECT.value:
-            if attribute != None and attribute != "*":
-                expression = getUnicode(root_node.id_name) + f"({attribute})"
-        elif root_node.id_name == StateKeywords.WHERE.value:
-            if attribute != None:
-                expression += getUnicode(root_node.id_name) + f"({attribute})"
-        elif root_node.id_name == StateKeywords.FROM.value:
-            expression += f"({attribute})"
-        elif root_node.id_name in [StateKeywords.INNER_JOIN.value, StateKeywords.LEFT_JOIN.value, StateKeywords.RIGHT_JOIN.value, StateKeywords.NATURAL_JOIN.value]:
-            if attribute == None:
-                expression += "(" + getExpression(root_state, root_node.left_child) + f" {getUnicode(root_node.id_name)} " + getExpression(root_state, root_node.right_child) + ")"
-            else:
-                expression += "(" + getExpression(root_state, root_node.left_child) + f" {getUnicode(root_node.id_name)} " + f"({attribute})" + getExpression(root_state, root_node.right_child) + ")"
-            break
-        elif root_node.id_name in [StateKeywords.UNION.value, StateKeywords.INTERSECTION.value, StateKeywords.EXCEPT.value]:
-            expression += "(" + getExpression(root_state, root_node.left_child) + ")" + f" {getUnicode(root_node.id_name)} " + "(" + getExpression(root_state, root_node.right_child) + ")"
-            break
-        
-        root_node = root_node.child
-
-    return expression
-
 def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOperator:
     # print("Query : ", query)
      
-    _, parenthesisRelation = getWordsFromParenthesis(query)
+    parenthesisRelation = getWordsFromParenthesis(query)
 
     current_state = root_state
     start_idx = 0
@@ -221,66 +118,110 @@ def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOpera
         if current_state.identifer != StateKeywords.ROOT.value:
             if root_node == None:
                 if current_state.identifer == StateKeywords.CREATE.value:
-                    root_node = UnaryOperator(StateKeywords.CREATE.value)
+                    new_node = UnaryOperator(StateKeywords.CREATE.value)
+                    root_node = new_node
                 elif current_state.identifer == StateKeywords.SELECT.value:
-                    root_node = UnaryOperator(StateKeywords.SELECT.value)
-                    root_node.attribute = attrib
+                    new_node = UnaryOperator(StateKeywords.SELECT.value)
+                    new_node.attribute = attrib
+                    if new_node.attribute and isQueryKeywordPresent(new_node.attribute):
+                        try:
+                            sub_tree = createSQLTree(root_state, new_node.attribute)
+                            new_node.sub_tree = sub_tree
+                        except:
+                            raise Exception(f"QueryKeyword : {new_node.id_name}, Nested Qury \"{attrib}\" is not valid.")
+
+                    root_node = new_node
                     current_select_node = root_node
                 else:
                     raise Exception("Given query is not valid!")
             else:
                 if current_state.identifer in [StateKeywords.DATABASE.value, StateKeywords.TABLE.value]:
-                    node = UnaryOperator(current_state.identifer)
-                    node.root = root_node
-                    node.attribute = attrib
+                    new_node = UnaryOperator(current_state.identifer)
+                    new_node.attribute = attrib
+                    
+                    if isQueryKeywordPresent(new_node.attribute):
+                        raise Exception(f"Attribute names [{attrib}] can't be Query Keywords.")
+                            
+                    new_node.root = root_node
+                    
                     if isinstance(root_node, UnaryOperator):
-                        root_node.child = node
+                        root_node.child = new_node
                     else:
                         raise Exception(f"Previous node is not instance of {UnaryOperator.__name__}")
                 elif current_state.identifer == StateKeywords.SELECT.value:
-                    node = UnaryOperator(current_state.identifer)
-                    node.attribute = attrib
-                    node.root = root_node
-                    root_node.right_child = node
-                    current_select_node = node
+                    new_node = UnaryOperator(current_state.identifer)
+                    new_node.attribute = attrib
+                    
+                    if new_node.attribute and isQueryKeywordPresent(new_node.attribute):
+                        try:
+                            sub_tree = createSQLTree(root_state, new_node.attribute)
+                            new_node.sub_tree = sub_tree
+                        except:
+                            raise Exception(f"QueryKeyword : {new_node.id_name}, Nested Qury \"{attrib}\" is not valid.")
+                    
+                    new_node.root = root_node
+                    root_node.right_child = new_node
+                    current_select_node = new_node
                 elif current_state.identifer == StateKeywords.FROM.value:
-                    node = UnaryOperator(current_state.identifer)
-                    node.root = current_select_node
-                    node.attribute = attrib
+                    new_node = UnaryOperator(current_state.identifer)
+                    new_node.attribute = attrib
+                    
+                    if new_node.attribute and isQueryKeywordPresent(new_node.attribute):
+                        try:
+                            sub_tree = createSQLTree(root_state, new_node.attribute)
+                            new_node.sub_tree = sub_tree
+                        except:
+                            raise Exception(f"QueryKeyword : {new_node.id_name}, Nested Qury \"{attrib}\" is not valid.")
+                    
+                    new_node.root = current_select_node
                     if isinstance(current_select_node, UnaryOperator):
-                        current_select_node.child = node
+                        current_select_node.child = new_node
                     else:
                         raise Exception(f"Previous node is not instance of {UnaryOperator.__name__}")
                 elif current_state.identifer == StateKeywords.WHERE.value:
-                    node = UnaryOperator(current_state.identifer)
-                    node.attribute = attrib
+                    new_node = UnaryOperator(current_state.identifer)
+                    new_node.attribute = attrib
+                    
+                    if new_node.attribute and isQueryKeywordPresent(new_node.attribute):
+                        try:
+                            sub_tree = createSQLTree(root_state, new_node.attribute)
+                            new_node.sub_tree = sub_tree
+                        except:
+                            raise Exception(f"QueryKeyword : {new_node.id_name}, Nested Qury \"{attrib}\" is not valid.")
                     
                     child = current_select_node.child
                     
-                    current_select_node.child = node
-                    node.root = current_select_node
-                    node.child = child
-                    child.root = node
+                    current_select_node.child = new_node
+                    new_node.root = current_select_node
+                    new_node.child = child
+                    child.root = new_node
                 elif current_state.identifer in [StateKeywords.INNER_JOIN.value, StateKeywords.LEFT_JOIN.value, StateKeywords.RIGHT_JOIN.value, StateKeywords.NATURAL_JOIN.value]:
-                    node = BinaryOperator(current_state.identifer)
+                    new_node = BinaryOperator(current_state.identifer)
                     
                     current_node = current_select_node
                     while current_node.child.id_name != StateKeywords.FROM.value:
                         current_node = current_node.child
                     
                     from_node = current_node.child
-                    from_node.root = node
+                    from_node.root = new_node
 
-                    current_node.child = node
-                    node.root = current_node
+                    current_node.child = new_node
+                    new_node.root = current_node
                     
-                    node.left_child = from_node
+                    new_node.left_child = from_node
                     
                     from_node = UnaryOperator(StateKeywords.FROM.value)
                     from_node.attribute = attrib
-                    from_node.root = node
                     
-                    node.right_child = from_node
+                    if from_node.attribute and isQueryKeywordPresent(from_node.attribute) :
+                        try:
+                            sub_tree = createSQLTree(root_state, from_node.attribute)
+                            from_node.sub_tree = sub_tree
+                        except:
+                            raise Exception(f"QueryKeyword : {new_node.id_name}, Nested Qury \"{attrib}\" is not valid.")
+                    
+                    from_node.root = new_node
+                    new_node.right_child = from_node
                 elif current_state.identifer == StateKeywords.ON.value:
                     current_node = current_select_node
                     
@@ -294,13 +235,21 @@ def createSQLTree(root_state : State, query: str) -> UnaryOperator | BinaryOpera
                         current_node = current_node.child
                         
                     current_node.attribute = attrib
+                    
+                    if current_node.attribute and isQueryKeywordPresent(current_node.attribute):
+                        try:
+                            sub_tree = createSQLTree(root_state, current_node.attribute)
+                            current_node.sub_tree = sub_tree
+                        except:
+                            raise Exception(f"QueryKeyword : {new_node.id_name}, Nested Qury \"{attrib}\" is not valid.")
+                    
                 elif current_state.identifer in [StateKeywords.UNION.value, StateKeywords.INTERSECTION.value, StateKeywords.EXCEPT.value]:
-                    node = BinaryOperator(current_state.identifer)
+                    new_node = BinaryOperator(current_state.identifer)
                     
-                    node.left_child = root_node
-                    root_node.root = node
+                    new_node.left_child = root_node
+                    root_node.root = new_node
                     
-                    root_node = node
+                    root_node = new_node
         
         current_state = next_state
         if current_state.identifer in [StateKeywords.ERROR.value, StateKeywords.COMPLETE.value]:
@@ -318,9 +267,7 @@ def getRelationalAlgebra(root_state : State, query : str):
     try:
         root_node = createSQLTree(root_state, query)
         # print(f"Table Name for \"{query}\" : {getTableNames(root_state, root_node)}")
-        for e in getEquivalence(root_state, root_node):
-            print(e)
-        return getExpression(root_state, root_node)
+        return getExpression(root_node)
     except Exception as e:
         raise Exception(e)
 
@@ -338,40 +285,43 @@ def parseSQLQuery(root_state : State, query : str):
                 print(f"Create Database : {child.attribute}")
     else:
         try:
-            str = getRelationalAlgebra(root_state, query)
-            print(str)
+            # str = getRelationalAlgebra(root_state, query)
+            # print(str)
+            root_node = createSQLTree(root_state, query)
+            equivalences = getEquivalence(root_node)
+            
+            print("\nEquivalences : ")
+            for e in equivalences:
+                print("\t" + e)
+
+            print("\nOld Expression : ") 
+            print("\t" + getExpression(root_node))
         except Exception as e:
             print(e)
 
 def main():
-    sql_queries = [
-        "SELECT * FROM table1",
-       "SELECT * FROM table1 WHERE a = b and c = d",
-       "SELECT c_id, c_name, c_title, d_PADD FROM table1",
-       "SELECT c_id, c_name, c_title, d_PADD FROM table1 WHERE b > 5000",
-       "SELECT c_id, c_name, c_title, d_PADD FROM table_a INNER JOIN Customers ON table.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c_id, c_test FROM table_c",
-       "SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3",
-       "SELECT c_id, c_name, c_title, d_PADD FROM table_a LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
-       "SELECT c_id, c_name, c_title, d_PADD FROM table_a RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c",
-       "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b",
-       "SELECT a FROM t1 EXCEPT SELECT a FROM t2 WHERE a=11 AND b=2"
-    ]
-
-    # sql_queries = [
-    #     "SELECT c_id, c_name FROM SELECT t FROM table_a INNER JOIN table_b ON table_a.c_id = table_b.c_id",
-    #     "SELECT c_id, c_name FROM table_a NATURAL JOIN table_b",
-    #     "SELECT * FROM table_a NATURAL JOIN table_b"
-    # ]
+    file_name = "sql_query.txt"
     
-    # sql_queries = [
-    #     "CREATE DATABASE database_name",
-    #     "CREATE TABLE (attrib_1, attrib_2)",
-    #     "SELECT c_id, c_name FROM (SELECT p_id FROM table1 WHERE (p_id < test))",
-    #     "SELECT c_id, c_name FROM (SELECT p_id FROM table1) WHERE p_id < test",
-    #     "SELECT c_id, c_name FROM SELECT p_id FROM table1 WHERE p_id < test"
-    # ]
+    sql_queries = []
+    
+    with open(file_name, 'r') as file:
+        for l in file:
+            start_idx = 0
+            while start_idx < len(l) and l[start_idx] in ['\n', ' ', ',', '#', '"', ';']:
+                start_idx += 1
+            
+            last_idx = len(l) - 1
+            while last_idx >= 0 and l[last_idx] in ['\n', ' ', ',', '#', '"', ';']:
+                last_idx -= 1
+            
+            if start_idx <= last_idx:
+                l = l[start_idx:last_idx+1]
+                sql_queries.append(l)
+            else:
+                break
 
     root_state = createFlowGraph()
+
 
     for query in sql_queries:
         parseSQLQuery(root_state, query)

@@ -1,0 +1,34 @@
+SELECT * FROM E1 NATURAL JOIN E3 WHERE a and b and c and d
+
+SELECT * FROM (SELECT * FROM E1 UNION SELECT * FROM E2) WHERE theta = 1
+
+SELECT * FROM E1, E2 NATURAL JOIN E3 WHERE a and b and c and d
+
+SELECT p1, p2, p3 FROM A INNER JOIN B ON id1 = id2 WHERE f = g UNION SELECT p3, p4 FROM C WHERE b > 5000 UNION SELECT x1, x2 FROM D,
+
+SELECT * FROM E1, E2 WHERE a and b and c and d
+
+SELECT c_id FROM E1 INNER JOIN E2 ON theta2 WHERE theta1 or theta3
+
+SELECT * FROM E1 INNER JOIN E2 ON theta2 WHERE theta1,
+
+SELECT * FROM table1 INNER JOIN table2 ON table1.id = table2.id,
+SELECT * FROM table1 WHERE a = b and c = d,
+SELECT * FROM table1,
+SELECT c_id, c_name, c_title, d_PADD FROM table1,
+SELECT c_id, c_name, c_title, d_PADD FROM table1 WHERE b > 5000,
+SELECT department_id, department_name FROM departments d WHERE department_id = d.department_id INTERSECTION SELECT * FROM table1, table2, table3,
+SELECT c_id, c_name, c_title, d_PADD FROM table_a LEFT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c,
+SELECT c_id, c_name, c_title, d_PADD FROM table_a RIGHT JOIN Customers ON database.id = customers.id WHERE f = g UNION SELECT c_id, c_name, c_title, d_PADD FROM table_b WHERE b > 5000 UNION SELECT c-id, c_test FROM table_c,
+SELECT c_id, c_name FROM table_a NATURAL JOIN table_b,
+SELECT a FROM t1 EXCEPT SELECT a FROM t2 WHERE a=11 AND b=2,
+SELECT a FROM T_A INNER JOIN T_B ON id1 = id2 WHERE f = g UNION SELECT b FROM T_C WHERE b > 5000 UNION SELECT c FROM T_D,
+SELECT c_id, c_name FROM SELECT t FROM table_a INNER JOIN table_b ON table_a.c_id = table_b.c_id,
+SELECT c_id, c_name FROM table_a NATURAL JOIN table_b,
+SELECT * FROM table_a NATURAL JOIN table_b,
+SELECT c_id, c_name FROM (SELECT p_id FROM table1 WHERE (p_id < test)),
+SELECT c_id, c_name FROM (SELECT p_id FROM table1) WHERE p_id < test,
+SELECT c_id, c_name FROM SELECT p_id FROM table1 WHERE p_id < test,
+SELECT c_id, c_name, c_title, d_PADD FROM table1 WHERE b > 5000
+CREATE DATABASE database_name,
+CREATE TABLE (attrib_1, attrib_2),
