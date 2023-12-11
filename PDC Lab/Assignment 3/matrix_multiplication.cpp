@@ -2,7 +2,7 @@
 #include<omp.h>
 #include<vector>
 
-#define Mat_Size 10000
+#define Mat_Size 1000
 
 using namespace std;
 
@@ -17,7 +17,6 @@ void sequential() {
                 res[i][j] += a[i][k] * a[k][j];
             }
         }
-        
     }
 }
 
@@ -31,24 +30,14 @@ int doTask(int row, int col) {
 }
 
 void parallel() {
-    #pragma omp parallel
-    #pragma omp for
+    #pragma omp parallel for
     for (size_t i = 0; i < Mat_Size; i++)
     {
+        #pragma omp parallel for
         for (size_t j = 0; j < Mat_Size; j++)
         {
             res[i][j] = doTask(i, j);
         }
-    }
-}
-
-void showMat(vector<vector<int>> &vec) {
-    for(int i = 0; i < Mat_Size; i++) {
-        for(int j = 0; j < Mat_Size; j++) {
-            printf("%d ", vec[i][j]);
-        }
-
-        printf("\n");
     }
 }
 
@@ -62,19 +51,24 @@ int main(int argc, char const *argv[])
         
     }
 
-    printf("Original Mat : \n");
-    showMat(a);
+    printf("Matrix Size : (%d X %d)\n", Mat_Size, Mat_Size);
 
-    // sequential();
+    double t1, t2;
 
-    // printf("Sequential Multiplication Mat : \n");
-    // showMat(res);
+    t1 = omp_get_wtime();
+    sequential();
+    t2 = omp_get_wtime();
 
+    printf("Sequential Multiplication Execution time : %f\n", (t2 - t1));
 
+    t1 = omp_get_wtime();
     parallel();
+    t2 = omp_get_wtime();
     
-    printf("Parallel Multiplication Mat : \n");
-    showMat(res);
+    printf("Parallel Multiplication Execution time : %f\n", (t2 - t1));
+
+    // printf("Parallel Multiplication Mat : \n");
+    // showMat(res);
 
     return 0;
 }

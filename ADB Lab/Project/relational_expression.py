@@ -94,12 +94,23 @@ def getTableNames(root_node : UnaryOperator | BinaryOperator):
     if root_node == None:
         return None
 
+    table_names = ""
     if root_node.id_name == StateKeywords.FROM.value:
         if root_node.sub_tree:
             return getTableNames(root_node.sub_tree)
-        return root_node.attribute
+        else:
+            return root_node.attribute
+    else:
+        if root_node.sub_tree:
+            table_names = getTableNames(root_node.sub_tree)
     
     if isinstance(root_node, UnaryOperator):
-        return getTableNames(root_node.child)
+        if table_names == "":
+            return getTableNames(root_node.child)
+        else:
+            return table_names + "," + getTableNames(root_node.child)
     
-    return getTableNames(root_node.left_child) + "," + getTableNames(root_node.right_child)
+    if table_names == "":
+        return getTableNames(root_node.left_child) + "," + getTableNames(root_node.right_child)
+    else:
+        return table_names + "," + getTableNames(root_node.left_child) + "," + getTableNames(root_node.right_child)

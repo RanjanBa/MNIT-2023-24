@@ -1,7 +1,7 @@
 from operators import UnaryOperator, BinaryOperator
 from states import State
 from utility import StateKeywords, QueryKeywords, getWordsFromParenthesis, isQueryKeywordPresent, processAttribute
-from relational_expression import getExpression
+from relational_expression import getExpression, getTableNames
 from relational_equivalence import getEquivalence
 
 def createFlowGraph() -> State:
@@ -296,6 +296,9 @@ def parseSQLQuery(root_state : State, query : str):
 
             print("\nOld Expression : ") 
             print("\t" + getExpression(root_node))
+            
+            # print("Tables : ")
+            # print("\t" + getTableNames(root_node))
         except Exception as e:
             print(e)
 

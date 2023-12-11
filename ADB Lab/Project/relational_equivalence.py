@@ -170,6 +170,9 @@ def recursiveEquivalences(current_node : UnaryOperator | BinaryOperator, root_no
         recursiveEquivalences(current_node.left_child, root_node, equivalences, equivalences_list)
         recursiveEquivalences(current_node.right_child, root_node, equivalences, equivalences_list)
 
+    if current_node.sub_tree:
+        recursiveEquivalences(current_node.sub_tree, root_node, equivalences, equivalences_list)
+        
     cascadingOfSelection(current_node, root_node, equivalences, equivalences_list)
     commutativityOfSelection(current_node, root_node, equivalences, equivalences_list)
     commutativityOfJoin(current_node, root_node, equivalences, equivalences_list)
