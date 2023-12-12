@@ -9,6 +9,43 @@ def allCombination(conditions, result_list : list[list[str]]):
         for com in combination:
             result_list.append(com)
 
+def commutativeOfSelectionAndProjection(current_node : UnaryOperator | BinaryOperator, root_node : UnaryOperator | BinaryOperator, equivalences : set[str], equivalences_list : list[str]):
+    if isinstance(current_node, BinaryOperator) or not current_node.child:
+        return
+    
+    ## print(f"{current_node} --->>> {current_node.child}")
+    
+    if (current_node.id_name == QueryKeywords.SELECT.value and current_node.child.id_name == QueryKeywords.WHERE.value) or (current_node.id_name == QueryKeywords.WHERE.value and current_node.child.id_name == QueryKeywords.SELECT.value):
+        parent_node = current_node.root
+        child_node = current_node.child
+        grand_child = child_node.child
+        
+        if parent_node:
+            parent_node.child = child_node
+        else:
+            root_node = child_node
+        child_node.root = parent_node
+        
+        child_node.child = current_node
+        current_node.root = child_node
+        
+        current_node.child = grand_child
+        grand_child.root = current_node
+        
+        recursiveEquivalences(current_node, root_node, equivalences, equivalences_list)
+        
+        if parent_node:
+            parent_node.child = current_node
+        else:
+            root_node = parent_node
+        current_node.root = parent_node
+        
+        current_node.child = child_node
+        child_node.root = current_node
+        
+        child_node.child = grand_child
+        grand_child.root = child_node
+
 def cascadingOfSelection(current_node : UnaryOperator | BinaryOperator, root_node : UnaryOperator | BinaryOperator, equivalences : set[str], equivalences_list : list[str]):
     if current_node.id_name == QueryKeywords.WHERE.value and current_node.attribute:
         conditions : list[str] = []
@@ -176,6 +213,7 @@ def recursiveEquivalences(current_node : UnaryOperator | BinaryOperator, root_no
     cascadingOfSelection(current_node, root_node, equivalences, equivalences_list)
     commutativityOfSelection(current_node, root_node, equivalences, equivalences_list)
     commutativityOfJoin(current_node, root_node, equivalences, equivalences_list)
+    commutativeOfSelectionAndProjection(current_node, root_node, equivalences, equivalences_list)
     selectionDistributionOverThetaJoin(current_node, root_node, equivalences, equivalences_list)
     selectionCombineWithJoin(current_node, root_node, equivalences, equivalences_list)
 

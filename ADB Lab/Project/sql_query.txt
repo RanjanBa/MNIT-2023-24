@@ -1,18 +1,12 @@
-SELECT * FROM (SELECT * FROM E1 UNION SELECT * FROM E2) WHERE theta = 1
+SELECT colA FROM customers WHERE id = 2
 
 SELECT * FROM E1 NATURAL JOIN E3 WHERE a and b and c and d
-
-
+SELECT * FROM (SELECT * FROM E1 UNION SELECT * FROM E2) WHERE theta = 1
 SELECT * FROM E1, E2 NATURAL JOIN E3 WHERE a and b and c and d
-
 SELECT p1, p2, p3 FROM A INNER JOIN B ON id1 = id2 WHERE f = g UNION SELECT p3, p4 FROM C WHERE b > 5000 UNION SELECT x1, x2 FROM D,
-
 SELECT * FROM E1, E2 WHERE a and b and c and d
-
 SELECT c_id FROM E1 INNER JOIN E2 ON theta2 WHERE theta1 or theta3
-
 SELECT * FROM E1 INNER JOIN E2 ON theta2 WHERE theta1,
-
 SELECT * FROM table1 INNER JOIN table2 ON table1.id = table2.id,
 SELECT * FROM table1 WHERE a = b and c = d,
 SELECT * FROM table1,

@@ -5,6 +5,7 @@ from relational_expression import getExpression, getTableNames
 from relational_equivalence import getEquivalence
 
 def createFlowGraph() -> State:
+    #define states
     root_state = State(StateKeywords.ROOT.value)
     completed_state = State(StateKeywords.COMPLETE.value)
     error_state = State(StateKeywords.ERROR.value)
@@ -50,7 +51,7 @@ def createFlowGraph() -> State:
     from_state.next_states[QueryKeywords.EXCEPT.value] = except_state
     from_state.next_states[""] = completed_state
     
-    where_state.next_states[QueryKeywords.SELECT.value] = select_state
+    ## where_state.next_states[QueryKeywords.SELECT.value] = select_state
     where_state.next_states[QueryKeywords.UNION.value] = union_state
     where_state.next_states[QueryKeywords.INTERSECTION.value] = intersection_state
     where_state.next_states[QueryKeywords.EXCEPT.value] = except_state
