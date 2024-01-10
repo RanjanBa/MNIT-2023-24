@@ -50,25 +50,15 @@ int main(int argc, char const *argv[])
         }
         
     }
-
     printf("Matrix Size : (%d X %d)\n", Mat_Size, Mat_Size);
-
     double t1, t2;
-
     t1 = omp_get_wtime();
     sequential();
     t2 = omp_get_wtime();
-
     printf("Sequential Multiplication Execution time : %f\n", (t2 - t1));
-
     t1 = omp_get_wtime();
     parallel();
     t2 = omp_get_wtime();
-    
     printf("Parallel Multiplication Execution time : %f\n", (t2 - t1));
-
-    // printf("Parallel Multiplication Mat : \n");
-    // showMat(res);
-
     return 0;
 }
