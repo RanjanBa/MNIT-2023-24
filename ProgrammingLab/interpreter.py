@@ -32,7 +32,7 @@ def splitPrintf(statement: str, line_no : int):
     for idx in range(1, len(words)):
         w = words[idx].strip()
         variables.append(w)
-        
+
     # print(variables)
 
     print_statement = words[0].strip()
@@ -159,6 +159,7 @@ def check(line : str, line_no : int) -> bool:
                     return False
                 
                 list_variables[var_name] = k
+                
                 if k == 'int':
                     variables_with_value[var_name] = 0
                 elif k == 'string':
@@ -290,10 +291,22 @@ def check(line : str, line_no : int) -> bool:
             
         while ch_idx < line_length and line[ch_idx] == ' ':
             ch_idx += 1
-            
+        
         if ch_idx >= line_length:
-            print(f"Syntex is not correct in line {line_no}")
-            return False
+            val2 = None
+            if not var_name2 in list_variables:
+                val2 = checkValue(var_name2, list_variables[var_name1])
+                if val2 == None:
+                    print(f"{var_name2} can't be cast to {list_variables[var_name1]} in line {line_no}")
+                    return False
+            else:
+                if list_variables[var_name1] == list_variables[var_name2]:
+                    val2 = variables_with_value[var_name2]
+                else:
+                    print(f"can't cast type from {list_variables[var_name2]} to {list_variables[var_name1]} in line {line_no}")
+                    return False
+            variables_with_value[var_name1] = val2
+            return True
         
         if line[ch_idx] in OPERATORS:
             operator = line[ch_idx]
@@ -375,7 +388,8 @@ def main():
     for line_idx, line in enumerate(file):
         if line == "\n":
             break
-        
+        if line[-1] == '\n':
+            line = line[:-1]
         if not check(line, line_idx + 1):
             print(f"Error in line {line_idx + 1} of the input code.")
             return

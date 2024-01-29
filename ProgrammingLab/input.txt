@@ -1,11 +1,11 @@
-int g
-int c = 10
+int c
 int d = 20
+c = 11
 string f = "123"
 string e = "hello"
 c = c + 20
 d = d / 10
-c += 20
+c *= 20
 d = 12 + 14
 d -= d
 f = f + e
