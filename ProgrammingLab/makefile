@@ -1,0 +1,1 @@
+gcc -o hellomake add.c subtract.c multiply.c division.c -I.
