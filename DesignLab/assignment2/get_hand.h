@@ -7,7 +7,7 @@ using namespace std;
 enum Hand {
     HIGH_CARD,
     PAIR,
-    TWO_PAIR,
+    TWO_PAIRS,
     THREE_OF_A_KIND,
     STRAIGHT,
     FLUSH,
@@ -16,4 +16,4 @@ enum Hand {
     STRAIGHT_FLUSH,
 };
 
-Hand getValue(vector<Card*>);
+Hand getHand(vector<Card*> &);
