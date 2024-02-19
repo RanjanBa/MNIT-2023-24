@@ -1,4 +1,4 @@
-from queue import PriorityQueue
+from queue import PriorityQueue, Queue
 
 table_ids = ['ID', 'AT', 'BT', 'CT', 'TAT', 'WT', 'RT']
 
@@ -12,6 +12,7 @@ def showTable(table):
                 print(table[i][j], end="\t")
         print()
 
+
 def sortedArrivalTimes(table):
     arrival_times = []
         
@@ -22,6 +23,7 @@ def sortedArrivalTimes(table):
     print(arrival_times)
 
     return arrival_times
+
 
 def fcfs(table):
     if len(table) == 0:
@@ -98,7 +100,6 @@ def srjf(table):
                 remaining_time = val[0] - execution_duration
                 currently_available_processes.put((remaining_time, val[1], val[2]))
                 ct += execution_duration
-                table[val[2]][2] = ct
             else:
                 ct += val[0]
                 table[val[2]][2] = ct
@@ -120,7 +121,6 @@ def srjf(table):
             remaining_time = val[0] - execution_duration
             currently_available_processes.put((remaining_time, val[1], val[2]))
             ct += execution_duration
-            table[val[2]][2] = ct
         else:
             print(f"Executing : {val[2]} : {val[0]}")
             ct += val[0]
@@ -147,14 +147,63 @@ def roundRobin(table):
 
     arrival_times = sortedArrivalTimes(table)
 
-    currently_avaible_processes = Queue()
+    currently_available_processes = Queue()
     ct = arrival_times[0][0]
 
-    for i in range(len(arrival_times)):
-        if ct < arrival_times[i][0]:
-            ct = arrival_times[i][0]
+    idx = 0
 
-        currently_avaibal
+    while idx < len(arrival_times):
+        while idx < len(arrival_times) and ct < arrival_times[idx][0]:
+            if currently_available_processes.qsize() == 0:
+                ct = arrival_times[idx][0]
+                break
+            
+            print(f"Current process : {val[0]}")
+            val = currently_available_processes.get()
+            if val[1] > quantum_time:
+                remaining_time = val[1] - quantum_time
+                ct += quantum_time
+                while idx < len(arrival_times) and ct >= arrival_times[idx][0]:
+                    currently_available_processes.put((arrival_times[idx][1], table[arrival_times[idx][1]][1]))
+                    idx += 1
+                currently_available_processes.put((val[0], remaining_time))
+            else:
+                ct += val[1]
+                table[val[0]][2] = ct
+
+        while idx < len(arrival_times) and ct >= arrival_times[idx][0]:
+            currently_available_processes.put((arrival_times[idx][1], table[arrival_times[idx][1]][1]))
+            idx += 1
+        
+        val = currently_available_processes.get()
+        
+        print(f"Current process : {val[0]}")
+        
+        if val[1] > quantum_time:
+            remaining_time = val[1] - quantum_time
+            ct += quantum_time
+            while idx < len(arrival_times) and ct >= arrival_times[idx][0]:
+                currently_available_processes.put((arrival_times[idx][1], table[arrival_times[idx][1]][1]))
+                idx += 1
+            currently_available_processes.put((val[0], remaining_time))
+        else:
+            ct += val[1]
+            table[val[0]][2] = ct
+        
+        print(f"Completion time : {ct}")
+        
+    while currently_available_processes.qsize():
+        print(f"Current process : {val[0]}")
+        val = currently_available_processes.get()
+        if val[1] > quantum_time:
+            remaining_time = val[1] - quantum_time
+            currently_available_processes.put((val[0], remaining_time))
+            ct += quantum_time
+        else:
+            ct += val[1]
+            table[val[0]][2] = ct
+        
+        print(f"Completion time : {ct}")
 
 
 def main():
@@ -172,8 +221,10 @@ def main():
 
     # sjf(table)
 
-    srjf(table)
-
+    # srjf(table)
+    
+    roundRobin(table)
+    
     for i in range(n):
         table[i][3] = table[i][2] - table[i][0]
         table[i][4] = table[i][3] - table[i][1]
@@ -189,6 +240,16 @@ def main():
     avg_wt = total_wait / n
     print(f"Total waiting time : {total_wait}")
     print(f"Average waiting time : {avg_wt}")
+    
+    # Calculate Average Total turn around time
+    total_turn_around = 0
+    for i in range(n):
+        total_turn_around += table[i][3]
+    
+    avg_turn = total_turn_around / n
+    print(f"Total waiting time : {total_turn_around}")
+    print(f"Average waiting time : {avg_turn}")
+
         
 if __name__ == "__main__":
     main()
