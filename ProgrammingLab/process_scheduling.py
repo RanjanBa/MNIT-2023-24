@@ -45,7 +45,7 @@ def sjf(table):
     idx = 0
     ct = 0
 
-    current_available_processes = PriorityQueue()
+    currently_available_processes = PriorityQueue()
 
     for i in range(len(table)):
         while idx < len(arrival_times) and arrival_times[idx][0] <= ct:
