@@ -12,15 +12,22 @@ def showTable(table):
                 print(table[i][j], end="\t")
         print()
 
-
-def fcfs(table):
+def sortedArrivalTimes(table):
     arrival_times = []
+        
     for i in range(len(table)):
         arrival_times.append((table[i][0], i))
-
+    
     arrival_times.sort()
-
     print(arrival_times)
+
+    return arrival_times
+
+def fcfs(table):
+    if len(table) == 0:
+        return
+
+    arrival_times = sortedArrivalTimes(table)
 
     ct = 0
 
@@ -35,12 +42,10 @@ def fcfs(table):
 
 
 def sjf(table):
-    arrival_times = []
-    for i in range(len(table)):
-        arrival_times.append((table[i][0], i))
+    if len(table) == 0:
+        return
 
-    arrival_times.sort()
-    print(arrival_times)
+    arrival_times = sortedArrivalTimes(table)
 
     idx = 0
     ct = 0
@@ -52,14 +57,105 @@ def sjf(table):
             currently_available_processes.put((table[arrival_times[idx][1]][1], arrival_times[idx][0], arrival_times[idx][1]))
             idx += 1
 
-        if len(currently_available_processes) == 0 and idx < len(arrival_times) and arrival_times[idx][0] > ct:
+        if currently_available_processes.qsize() == 0 and idx < len(arrival_times) and arrival_times[idx][0] > ct:
             ct = arrival_times[idx][0]
             currently_available_processes.put((table[arrival_times[idx][1]][1], arrival_times[idx][0], arrival_times[idx][1]))
 
         val = currently_available_processes.get()
-        print(val)
+        table[val[2]][5] = ct - val[1]
         ct += val[0]
         table[val[2]][2] = ct
+
+
+def srjf(table):
+    if len(table) == 0:
+        return
+    
+    arrival_times = sortedArrivalTimes(table)
+
+    currently_available_processes = PriorityQueue()
+    
+    ct = arrival_times[0][0]
+
+    visited_processes = set()
+
+    for i in range(len(arrival_times)):
+        while ct < arrival_times[i][0]:
+            if currently_available_processes.qsize() == 0:
+                ct = arrival_times[i][0]
+                break
+            
+            execution_duration = arrival_times[i][0] - ct
+            val = currently_available_processes.get()
+
+            if not val[2] in visited_processes:
+                print(f"First visited {val[2]} at {ct}")
+                table[val[2]][5] = ct - val[1]
+            visited_processes.add(val[2])
+
+            if val[0] > execution_duration:
+                print(f"Executing : {val[2]} : {val[0]}")
+                remaining_time = val[0] - execution_duration
+                currently_available_processes.put((remaining_time, val[1], val[2]))
+                ct += execution_duration
+                table[val[2]][2] = ct
+            else:
+                ct += val[0]
+                table[val[2]][2] = ct
+
+        currently_available_processes.put((table[arrival_times[i][1]][1], arrival_times[i][0], arrival_times[i][1]))
+        execution_duration = 10000000
+        if i < len(arrival_times) - 1:
+            execution_duration = arrival_times[i+1][0] - arrival_times[i][0]
+
+        val = currently_available_processes.get()      
+ 
+        if not val[2] in visited_processes:
+            print(f"First visited {val[2]} at {ct}")
+            table[val[2]][5] = ct - val[1]
+        visited_processes.add(val[2])
+ 
+        if val[0] > execution_duration:
+            print(f"Executing : {val[2]} : {execution_duration}")
+            remaining_time = val[0] - execution_duration
+            currently_available_processes.put((remaining_time, val[1], val[2]))
+            ct += execution_duration
+            table[val[2]][2] = ct
+        else:
+            print(f"Executing : {val[2]} : {val[0]}")
+            ct += val[0]
+            table[val[2]][2] = ct
+    
+    while currently_available_processes.qsize() > 0:
+        print(f"Executing : {val[2]} : {val[0]}")
+        val = currently_available_processes.get()
+
+        if not val[2] in visited_processes:
+            print(f"First visited {val[2]} at {ct}")
+            table[val[2]][5] = ct - val[1]
+        visited_processes.add(val[2])
+
+        ct += val[0]
+        table[val[2]][2] = ct
+
+
+def roundRobin(table):
+    if len(table) == 0:
+        return
+
+    quantum_time = 2
+
+    arrival_times = sortedArrivalTimes(table)
+
+    currently_avaible_processes = Queue()
+    ct = arrival_times[0][0]
+
+    for i in range(len(arrival_times)):
+        if ct < arrival_times[i][0]:
+            ct = arrival_times[i][0]
+
+        currently_avaibal
+
 
 def main():
     n = int(input("How many process are there ? "))
@@ -74,7 +170,9 @@ def main():
 
     # fcfs(table)
 
-    sjf(table)
+    # sjf(table)
+
+    srjf(table)
 
     for i in range(n):
         table[i][3] = table[i][2] - table[i][0]
