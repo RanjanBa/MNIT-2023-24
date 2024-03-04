@@ -151,6 +151,8 @@ def roundRobin(table):
     ct = arrival_times[0][0]
 
     idx = 0
+    
+    visited_processes = set()
 
     while idx < len(arrival_times):
         while idx < len(arrival_times) and ct < arrival_times[idx][0]:
@@ -160,6 +162,12 @@ def roundRobin(table):
             
             print(f"Current process : {val[0]}")
             val = currently_available_processes.get()
+            
+            if not val[0] in visited_processes:
+                print(f"First visited {val[0]} at {ct}")
+                table[val[0]][5] = ct - table[val[0]][0]
+            visited_processes.add(val[0])
+            
             if val[1] > quantum_time:
                 remaining_time = val[1] - quantum_time
                 ct += quantum_time
@@ -176,6 +184,11 @@ def roundRobin(table):
             idx += 1
         
         val = currently_available_processes.get()
+        
+        if not val[0] in visited_processes:
+            print(f"First visited {val[0]} at {ct}")
+            table[val[0]][5] = ct - table[val[0]][0]
+        visited_processes.add(val[0])
         
         print(f"Current process : {val[0]}")
         
@@ -195,6 +208,11 @@ def roundRobin(table):
     while currently_available_processes.qsize():
         print(f"Current process : {val[0]}")
         val = currently_available_processes.get()
+        if not val[0] in visited_processes:
+            print(f"First visited {val[0]} at {ct}")
+            table[val[0]][5] = ct - table[val[0]][0]
+        visited_processes.add(val[0])
+
         if val[1] > quantum_time:
             remaining_time = val[1] - quantum_time
             currently_available_processes.put((val[0], remaining_time))
