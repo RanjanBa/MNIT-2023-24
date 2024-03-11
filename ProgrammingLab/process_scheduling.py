@@ -276,21 +276,25 @@ def main():
         table[i][1] = bt
         print()
     
+    print("First Comes First Serve")
     new_table = copyTable(table)
     fcfs(new_table)
     calculateTAT(new_table)
     print()
 
+    print("Shortest Job First")
     new_table = copyTable(table)
     sjf(new_table)
     calculateTAT(new_table)
     print()
     
+    print("Shotest Remaining Job First")
     new_table = copyTable(table)
     srjf(new_table)
     calculateTAT(new_table)
     print()
     
+    print("Round Robin")
     new_table = copyTable(table)
     roundRobin(new_table)
     calculateTAT(new_table)
