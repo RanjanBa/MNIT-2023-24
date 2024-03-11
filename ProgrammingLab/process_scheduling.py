@@ -112,26 +112,26 @@ def srjf(table):
         val = currently_available_processes.get()      
  
         if not val[2] in visited_processes:
-            print(f"First visited {val[2]} at {ct}")
+            # print(f"First visited {val[2]} at {ct}")
             table[val[2]][5] = ct - val[1]
         visited_processes.add(val[2])
  
         if val[0] > execution_duration:
-            print(f"Executing : {val[2]} : {execution_duration}")
+            # print(f"Executing : {val[2]} : {execution_duration}")
             remaining_time = val[0] - execution_duration
             currently_available_processes.put((remaining_time, val[1], val[2]))
             ct += execution_duration
         else:
-            print(f"Executing : {val[2]} : {val[0]}")
+            # print(f"Executing : {val[2]} : {val[0]}")
             ct += val[0]
             table[val[2]][2] = ct
     
     while currently_available_processes.qsize() > 0:
-        print(f"Executing : {val[2]} : {val[0]}")
+        # print(f"Executing : {val[2]} : {val[0]}")
         val = currently_available_processes.get()
 
         if not val[2] in visited_processes:
-            print(f"First visited {val[2]} at {ct}")
+            # print(f"First visited {val[2]} at {ct}")
             table[val[2]][5] = ct - val[1]
         visited_processes.add(val[2])
 
@@ -160,11 +160,11 @@ def roundRobin(table):
                 ct = arrival_times[idx][0]
                 break
             
-            print(f"Current process : {val[0]}")
+            # print(f"Current process : {val[0]}")
             val = currently_available_processes.get()
             
             if not val[0] in visited_processes:
-                print(f"First visited {val[0]} at {ct}")
+                # print(f"First visited {val[0]} at {ct}")
                 table[val[0]][5] = ct - table[val[0]][0]
             visited_processes.add(val[0])
             
@@ -186,11 +186,11 @@ def roundRobin(table):
         val = currently_available_processes.get()
         
         if not val[0] in visited_processes:
-            print(f"First visited {val[0]} at {ct}")
+            # print(f"First visited {val[0]} at {ct}")
             table[val[0]][5] = ct - table[val[0]][0]
         visited_processes.add(val[0])
         
-        print(f"Current process : {val[0]}")
+        # print(f"Current process : {val[0]}")
         
         if val[1] > quantum_time:
             remaining_time = val[1] - quantum_time
@@ -203,13 +203,13 @@ def roundRobin(table):
             ct += val[1]
             table[val[0]][2] = ct
         
-        print(f"Completion time : {ct}")
+        # print(f"Completion time : {ct}")
         
     while currently_available_processes.qsize():
-        print(f"Current process : {val[0]}")
+        # print(f"Current process : {val[0]}")
         val = currently_available_processes.get()
         if not val[0] in visited_processes:
-            print(f"First visited {val[0]} at {ct}")
+            # print(f"First visited {val[0]} at {ct}")
             table[val[0]][5] = ct - table[val[0]][0]
         visited_processes.add(val[0])
 
@@ -221,28 +221,22 @@ def roundRobin(table):
             ct += val[1]
             table[val[0]][2] = ct
         
-        print(f"Completion time : {ct}")
+        # print(f"Completion time : {ct}")
 
-
-def main():
-    n = int(input("How many process are there ? "))
-    print()
-    table = [[0 for j in range(6)] for _ in range(n)]
+def copyTable(table):
+    n = len(table)
+    m = len(table[0])
+    print(n)
+    new_table = [[0 for i in range(m)] for _ in range(n)]
+    
     for i in range(n):
-        at = int(input(f"Arrival time of process{i} : ")) 
-        bt = int(input(f"Burst time of process{i} : "))
-        table[i][0] = at
-        table[i][1] = bt
-        print()
+        for j in range(m):
+            new_table[i][j] = table[i][j]
 
-    # fcfs(table)
+    return new_table
 
-    # sjf(table)
-
-    # srjf(table)
-    
-    roundRobin(table)
-    
+def calculateTAT(table):
+    n = len(table)
     for i in range(n):
         table[i][3] = table[i][2] - table[i][0]
         table[i][4] = table[i][3] - table[i][1]
@@ -267,6 +261,37 @@ def main():
     avg_turn = total_turn_around / n
     print(f"Total waiting time : {total_turn_around}")
     print(f"Average waiting time : {avg_turn}")
+
+def main():
+    n = int(input("How many process are there ? "))
+    print()
+    table = [[0 for j in range(6)] for _ in range(n)]
+    for i in range(n):
+        at = int(input(f"Arrival time of process{i} : ")) 
+        bt = int(input(f"Burst time of process{i} : "))
+        table[i][0] = at
+        table[i][1] = bt
+        print()
+    
+    new_table = copyTable(table)
+    fcfs(new_table)
+    calculateTAT(new_table)
+    print()
+
+    new_table = copyTable(table)
+    sjf(new_table)
+    calculateTAT(new_table)
+    print()
+    
+    new_table = copyTable(table)
+    srjf(new_table)
+    calculateTAT(new_table)
+    print()
+    
+    new_table = copyTable(table)
+    roundRobin(new_table)
+    calculateTAT(new_table)
+    print()
 
         
 if __name__ == "__main__":
