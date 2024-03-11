@@ -223,6 +223,7 @@ def roundRobin(table):
         
         # print(f"Completion time : {ct}")
 
+
 def copyTable(table):
     n = len(table)
     m = len(table[0])
@@ -234,6 +235,7 @@ def copyTable(table):
             new_table[i][j] = table[i][j]
 
     return new_table
+
 
 def calculateTAT(table):
     n = len(table)
@@ -261,6 +263,7 @@ def calculateTAT(table):
     avg_turn = total_turn_around / n
     print(f"Total waiting time : {total_turn_around}")
     print(f"Average waiting time : {avg_turn}")
+
 
 def main():
     n = int(input("How many process are there ? "))
